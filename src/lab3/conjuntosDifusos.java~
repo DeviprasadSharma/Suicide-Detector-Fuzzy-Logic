@@ -1,0 +1,129 @@
+
+package lab3;
+
+import nrc.fuzzy.*;
+
+/**
+ *
+ * @author Gonzalom
+ */
+public class conjuntosDifusos {
+    
+     FuzzyVariable consumo, comportamiento, intentos_suicidios, traumas, aprecio;
+
+    /**Constructor, no recive ningun argumento*/
+    conjuntosDifusos()throws FuzzyException
+    {
+        this.iniciarConsumo();
+        this.iniciarComportamiento();
+        this.iniciarIntentos();
+        this.iniciarTraumas();
+        this.iniciarAprecio();
+
+    }
+    
+   /**Incializa la variable consumo.
+     *
+     * La variable consumo tiene 4 conjuntos difusos: poco, mediano, mucho y
+     * demasiado en forma de trapesoides. Esta variable esta en la unidad de
+     * dias.
+     * */
+    
+    /* (Rango: cada 5 dias) (60)
+      0 : no hay consumo
+      1 – 15: grave 
+      30 – 60: leve
+      60+: no hay adiccion
+    */
+    
+    private void iniciarConsumo()throws FuzzyException
+    {
+        this.consumo = new FuzzyVariable("Habitualidad en el consumo", 0, 60, "Dias");
+        this.consumo.addTerm("noConsumo"  , new TrapezoidFuzzySet(0, 0, 1, 1));
+        this.consumo.addTerm("graveConsumo"      , new TrapezoidFuzzySet(1, 1, 15, 22));
+        this.consumo.addTerm("leveConsumo"       , new TrapezoidFuzzySet(15, 22, 30, 45));
+        this.consumo.addTerm("sinAdiccion", new TrapezoidFuzzySet(30, 45, 60, 60));
+    }
+    
+     private void iniciarComportamiento()throws FuzzyException
+    {
+        this.comportamiento = new FuzzyVariable("Cambios en el comportamiento y estado de animo ", 0, 10, "Escala");
+        this.comportamiento.addTerm("habitualComportamiento", new TrapezoidFuzzySet(0, 0, 1, 2));
+        this.comportamiento.addTerm("moderadoComportamiento", new TrapezoidFuzzySet(1, 2, 4, 5));
+        this.comportamiento.addTerm("altoComportamiento"    , new TrapezoidFuzzySet(4, 5, 7, 8));
+        this.comportamiento.addTerm("graveComportamiento"   , new TrapezoidFuzzySet(7, 8, 10, 10));
+    }
+     
+    private void iniciarIntentos()throws FuzzyException
+    {
+        this.intentos_suicidios = new FuzzyVariable("Intentos de suicidio ", 0, 10, "Escala perceptiva");
+        this.intentos_suicidios.addTerm("noSuicidios"   , new TrapezoidFuzzySet(0, 0, 1, 2));
+        this.intentos_suicidios.addTerm("pocoSuicidios" , new TrapezoidFuzzySet(1, 2, 4, 5));
+        this.intentos_suicidios.addTerm("altoSuicidios" , new TrapezoidFuzzySet(4, 5, 7, 8));
+        this.intentos_suicidios.addTerm("graveSuicidios", new TrapezoidFuzzySet(7, 8, 10, 10));
+    }
+    
+    private void iniciarTraumas()throws FuzzyException
+    {
+        this.traumas = new FuzzyVariable("Presenta traumas, perdidas y/o preocupaciones recientes ", 0, 10, "Escala");
+        this.traumas.addTerm("noTraumas"   , new TrapezoidFuzzySet(0, 0, 1, 2));
+        this.traumas.addTerm("pocoTraumas" , new TrapezoidFuzzySet(1, 2, 4, 5));
+        this.traumas.addTerm("altoTraumas" , new TrapezoidFuzzySet(4, 5, 7, 8));
+        this.traumas.addTerm("graveTraumas", new TrapezoidFuzzySet(7, 8, 10, 10));
+    }
+    
+    private void iniciarAprecio()throws FuzzyException
+    {
+        this.aprecio = new FuzzyVariable("Se considera inutil para la sociedad y sus cercanos ", 0, 10, "Escala");
+        this.aprecio.addTerm("noAprecio"       , new TrapezoidFuzzySet(0, 0, 1, 2));
+        this.aprecio.addTerm("pocoAprecio"     , new TrapezoidFuzzySet(1, 2, 4, 5));
+        this.aprecio.addTerm("altoAprecio"     , new TrapezoidFuzzySet(4, 5, 7, 8));
+        this.aprecio.addTerm("demasiadoAprecio", new TrapezoidFuzzySet(7, 8, 10, 10));
+    }
+    
+    /**Getter de la variable consumo
+     *
+     * @return La variable consumoo
+     * */
+    public FuzzyVariable getConsumo()
+    {
+        return this.consumo;
+    }
+
+    public FuzzyVariable getTraumas()
+    {
+        return this.traumas;
+    }
+
+    /**Getter de la variable comportamiento
+     *
+     * @return La variable comportamiento
+     * */
+    public FuzzyVariable getComportamiento()
+    {
+        return this.comportamiento;
+    }
+
+
+    /**Getter de la variable intentos_suicidios
+     *
+     * @return La variable intentos_suicidios
+     * */
+    public FuzzyVariable getintentos_suicidios()
+    {
+        return this.intentos_suicidios;
+    }
+
+    /**Getter de la variable aprecio
+     *
+     * @return La variable aprecio
+     * */
+    public FuzzyVariable getAprecio()
+    {
+        return this.aprecio;
+    }
+    
+    
+    
+    
+} // Fin clase conjuntoDifusos

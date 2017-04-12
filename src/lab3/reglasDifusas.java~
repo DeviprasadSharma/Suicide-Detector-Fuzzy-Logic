@@ -1,0 +1,925 @@
+
+
+package lab3;
+
+import nrc.fuzzy.*;
+import java.util.*;
+import java.io.*;
+
+/**
+*
+* @author Gonzalom
+*/
+public class reglasDifusas {
+	
+	// En este arreglo se guardan las reglas difusas
+	ArrayList<FuzzyRule> reglas;
+        
+	conjuntosDifusos conjuntos;
+
+	// Las conclusiones de la inferencia difusa 
+	FuzzyValue riesgoAlto;
+	FuzzyValue riesgoLeve;
+	FuzzyValue sinRiesgo;
+
+	/**********************************************
+	DEFINICION VARIABLES
+	*********************************************/
+
+	/**************************************
+	Consumo (Dias)
+	**************************************/ 
+
+	FuzzyValue no_consumo;
+	FuzzyValue consumo_grave;
+	FuzzyValue consumo_leve;
+	FuzzyValue sin_adiccion;
+
+	/**************************************
+	Comportamiento (Escala)
+	**************************************/ 
+
+	FuzzyValue comportamiento_habitual;
+	FuzzyValue comportamiento_moderado;
+	FuzzyValue comportamiento_alto;
+	FuzzyValue comportamiento_grave;
+
+	/**************************************
+	Intentos suicidios (Escala)
+	**************************************/ 
+
+	FuzzyValue no_intentos;
+	FuzzyValue intentos_poco;
+	FuzzyValue intentos_alto;
+	FuzzyValue intentos_grave;
+
+	/**************************************
+	Traumas (Escala)
+	**************************************/ 
+
+	FuzzyValue no_traumas;
+	FuzzyValue traumas_poco;
+	FuzzyValue traumas_alto;
+	FuzzyValue traumas_grave;
+
+	/**************************************
+	Aprecio 
+	**************************************/ 
+
+	FuzzyValue no_util;
+	FuzzyValue util_poco;
+	FuzzyValue util_alto;
+	FuzzyValue util_demasiado;
+
+	// Niveles normales (incluye no y poco)
+	FuzzyValue consumo_normal;
+	FuzzyValue comportamiento_normal;
+	FuzzyValue intentos_normal;
+	FuzzyValue traumas_normal;
+	FuzzyValue util_normal;
+	
+        // Niveles medios(incluye poco y alto)
+	FuzzyValue consumo_medio;
+	FuzzyValue comportamiento_medio;
+	FuzzyValue intentos_medio;
+	FuzzyValue traumas_medio;
+	FuzzyValue util_medio;
+        
+	/**Constructor que inicializa los valores de los FuzzyValue y de las reglas.
+	*
+	* @param conjuntos Un objeto ConjuntosDifusos que contiene los conjuntos
+	* necesarios para realizar la inferecnia logica*/
+	
+	
+	reglasDifusas(conjuntosDifusos conjuntos)throws FuzzyException{
+
+		this.reglas    = new ArrayList<FuzzyRule>();
+
+		this.conjuntos = conjuntos;
+
+		FuzzyRule regla;
+
+		// Variable para la conclusion
+		FuzzyVariable conclusion = new FuzzyVariable("Conclusion", 0, 100, "%");    // En conclusion se guarda el resultado final
+		
+		// Se tienen 3 resultados para conclusion, riesgo alto, riesgo leve,sin riesgo
+		
+		conclusion.addTerm("sinRiesgo" , new TrapezoidFuzzySet(0, 0, 25, 33));
+		conclusion.addTerm("riesgoLeve" , new TrapezoidFuzzySet(25, 33, 66, 75));
+		conclusion.addTerm("riesgoAlto"  , new TrapezoidFuzzySet(66, 75, 100, 100));
+
+		// Las posibles conclusiones
+		this.riesgoAlto  = new FuzzyValue(conclusion, "riesgoAlto");
+		this.riesgoLeve  = new FuzzyValue(conclusion, "riesgoLeve");
+		this.sinRiesgo   = new FuzzyValue(conclusion, "sinRiesgo");
+
+		// Definimos los valores que vamos a usar para definir las reglas
+		
+		// Consumo
+
+		this.no_consumo    = new FuzzyValue(conjuntos.getConsumo(), "noConsumo");
+		this.consumo_grave = new FuzzyValue(conjuntos.getConsumo(), "graveConsumo");
+		this.consumo_leve  = new FuzzyValue(conjuntos.getConsumo(), "leveConsumo");
+		this.sin_adiccion  = new FuzzyValue(conjuntos.getConsumo(), "sinAdiccion");
+
+		// Comportamiento
+
+		this.comportamiento_habitual = new FuzzyValue(conjuntos.getComportamiento(), "habitualComportamiento");
+		this.comportamiento_moderado = new FuzzyValue(conjuntos.getComportamiento(), "moderadoComportamiento");
+		this.comportamiento_alto     = new FuzzyValue(conjuntos.getComportamiento(), "altoComportamiento");
+		this.comportamiento_grave    = new FuzzyValue(conjuntos.getComportamiento(), "graveComportamiento");
+
+		// Intentos suicidas
+		
+		this.no_intentos    = new FuzzyValue(conjuntos.getintentos_suicidios(), "noSuicidios");
+		this.intentos_poco  = new FuzzyValue(conjuntos.getintentos_suicidios(), "pocoSuicidios");
+		this.intentos_alto  = new FuzzyValue(conjuntos.getintentos_suicidios(), "altoSuicidios");
+		this.intentos_grave = new FuzzyValue(conjuntos.getintentos_suicidios(), "graveSuicidios");
+
+		// Traumas
+		
+		this.no_traumas    = new FuzzyValue(conjuntos.getTraumas(), "noTraumas");
+		this.traumas_poco  = new FuzzyValue(conjuntos.getTraumas(), "pocoTraumas");
+		this.traumas_alto  = new FuzzyValue(conjuntos.getTraumas(), "altoTraumas");
+		this.traumas_grave = new FuzzyValue(conjuntos.getTraumas(), "graveTraumas");
+
+		// Aprecio
+		
+		this.no_util        = new FuzzyValue(conjuntos.getAprecio(), "noAprecio");
+		this.util_poco      = new FuzzyValue(conjuntos.getAprecio(), "pocoAprecio");
+		this.util_alto      = new FuzzyValue(conjuntos.getAprecio(), "altoAprecio");
+		this.util_demasiado = new FuzzyValue(conjuntos.getAprecio(), "demasiadoAprecio");
+
+		this.consumo_normal         = this.no_consumo.fuzzyUnion(this.consumo_leve);
+		this.consumo_normal         = this.consumo_normal.fuzzyUnion(this.sin_adiccion);
+		this.comportamiento_normal  = this.comportamiento_habitual.fuzzyUnion(this.comportamiento_moderado);
+		this.intentos_normal        = this.no_intentos.fuzzyUnion(this.intentos_poco);
+		this.traumas_normal         = this.no_traumas.fuzzyUnion(this.traumas_poco);
+		this.util_normal            = this.no_util.fuzzyUnion(this.util_poco);
+
+                this.consumo_medio         = this.sin_adiccion.fuzzyUnion(this.consumo_leve);
+		this.comportamiento_medio  = this.comportamiento_moderado.fuzzyUnion(this.comportamiento_alto);
+		this.intentos_medio        = this.intentos_poco.fuzzyUnion(this.intentos_alto);
+		this.traumas_medio         = this.traumas_poco.fuzzyUnion(this.traumas_alto);
+		this.util_medio            = this.util_poco.fuzzyUnion(this.util_alto);
+
+		/************************************
+		Reglas
+		************************************/
+
+		/************************************
+		Riesgo alto
+		************************************/
+
+
+		// 1.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_grave);
+		regla.addAntecedent(comportamiento_grave);	
+		regla.addAntecedent(intentos_grave);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 2.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_grave);
+		regla.addAntecedent(comportamiento_grave);	
+		regla.addAntecedent(traumas_grave);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 3.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_grave);
+		regla.addAntecedent(comportamiento_grave);
+		regla.addAntecedent(util_demasiado);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 4.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_grave);
+		regla.addAntecedent(intentos_grave);	
+		regla.addAntecedent(traumas_grave);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 5.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_grave);
+		regla.addAntecedent(intentos_grave);
+		regla.addAntecedent(util_demasiado);	
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 6.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_grave);
+		regla.addAntecedent(traumas_grave);
+		regla.addAntecedent(util_demasiado);	
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 7.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(comportamiento_grave);
+		regla.addAntecedent(intentos_grave);
+		regla.addAntecedent(traumas_grave);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 8.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(comportamiento_grave);
+		regla.addAntecedent(intentos_grave);
+		regla.addAntecedent(util_demasiado);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 9.                    
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(comportamiento_grave);
+		regla.addAntecedent(traumas_grave);
+		regla.addAntecedent(util_demasiado);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 10.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(intentos_grave);
+		regla.addAntecedent(traumas_grave);
+		regla.addAntecedent(util_demasiado);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+
+		// 11.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(intentos_alto);
+		regla.addAntecedent(comportamiento_alto);
+		regla.addAntecedent(intentos_alto);
+		regla.addAntecedent(traumas_alto);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 12.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve);      //Alcohol alto
+		regla.addAntecedent(comportamiento_alto);
+		regla.addAntecedent(intentos_alto);
+		regla.addAntecedent(util_alto);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);  
+
+		// 13.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(comportamiento_alto);
+		regla.addAntecedent(intentos_alto);
+		regla.addAntecedent(traumas_alto);
+		regla.addAntecedent(util_alto);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 14.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve);
+		regla.addAntecedent(intentos_alto);
+		regla.addAntecedent(traumas_alto);
+		regla.addAntecedent(util_alto);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);   
+
+		// 15.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve);
+		regla.addAntecedent(comportamiento_alto);
+		regla.addAntecedent(traumas_alto);
+		regla.addAntecedent(util_alto);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+
+		// 16.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(intentos_grave);
+		regla.addAntecedent(traumas_grave);
+
+		regla.addConclusion(riesgoAlto);
+		this .reglas.add(regla);
+		
+		/************************************
+		Riesgo leve
+		************************************/
+
+		// 17.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_grave);
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 18.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(comportamiento_grave);
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 19.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(intentos_grave);
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 20.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(traumas_grave);
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 21.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(util_demasiado);
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 22.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve);  // Consumo alto
+		regla.addAntecedent(comportamiento_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 23.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve);  // Consumo alto
+		regla.addAntecedent(intentos_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 24.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve);  
+		regla.addAntecedent(traumas_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 25.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve);  
+		regla.addAntecedent(util_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 26.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(comportamiento_alto);  
+		regla.addAntecedent(intentos_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 27.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(comportamiento_alto);  
+		regla.addAntecedent(traumas_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 28.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(comportamiento_alto);  
+		regla.addAntecedent(util_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 29.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(intentos_alto);  
+		regla.addAntecedent(traumas_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 30.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(intentos_alto);  
+		regla.addAntecedent(util_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 30.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(intentos_alto);  
+		regla.addAntecedent(util_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 31.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(traumas_alto);  
+		regla.addAntecedent(util_alto); 
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+		// 32.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(sin_adiccion);  //consumo poco 
+		regla.addAntecedent(comportamiento_moderado);  //Comportamiento poco
+		regla.addAntecedent(intentos_poco); //Intentos poco
+		regla.addAntecedent(traumas_poco); //Traumas poco
+		regla.addAntecedent(util_poco);  
+
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+                // 33.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(intentos_alto); 
+		
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+                // 34.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(traumas_alto); 
+		
+		regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+                
+                // 35.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve); 
+		regla.addAntecedent(comportamiento_medio);  
+		regla.addAntecedent(intentos_medio); 
+		regla.addAntecedent(traumas_medio);
+		regla.addAntecedent(util_medio); 
+                
+                regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+
+                // 36.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_medio); 
+		regla.addAntecedent(comportamiento_alto);  
+		regla.addAntecedent(intentos_medio); 
+		regla.addAntecedent(traumas_medio);
+		regla.addAntecedent(util_medio);
+                
+                regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+                
+                // 37.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_medio); 
+		regla.addAntecedent(comportamiento_medio);  
+		regla.addAntecedent(intentos_alto); 
+		regla.addAntecedent(traumas_medio);
+		regla.addAntecedent(util_medio);
+                
+                regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+                
+                // 38.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_medio); 
+		regla.addAntecedent(comportamiento_medio);  
+		regla.addAntecedent(intentos_medio); 
+		regla.addAntecedent(traumas_alto);
+		regla.addAntecedent(util_medio);
+                
+                regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+                
+                // 39.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_medio); 
+		regla.addAntecedent(comportamiento_medio);  
+		regla.addAntecedent(intentos_medio); 
+		regla.addAntecedent(traumas_medio);
+		regla.addAntecedent(util_alto);
+                
+                regla.addConclusion(riesgoLeve);
+		this .reglas.add(regla);
+                
+		/************************************
+		Sin riesgo 
+		************************************/ 
+		// 40.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(no_consumo); 
+		regla.addAntecedent(comportamiento_normal);  
+		regla.addAntecedent(intentos_normal); 
+		regla.addAntecedent(traumas_normal);
+		regla.addAntecedent(util_normal); 
+
+		regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+
+		// 41.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_normal);
+		regla.addAntecedent(comportamiento_habitual);  
+		regla.addAntecedent(intentos_normal); 
+		regla.addAntecedent(traumas_normal);
+		regla.addAntecedent(util_normal); 
+
+		regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+
+		// 42.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_normal); 
+		regla.addAntecedent(comportamiento_normal);   
+		regla.addAntecedent(no_intentos);
+		regla.addAntecedent(traumas_normal);
+		regla.addAntecedent(util_normal); 
+
+		regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+
+		// 43.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_normal); 
+		regla.addAntecedent(traumas_normal);
+		regla.addAntecedent(intentos_normal);   
+		regla.addAntecedent(no_traumas);
+		regla.addAntecedent(util_normal); 
+
+		regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+
+		// 44. 
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_normal);
+		regla.addAntecedent(comportamiento_normal);
+		regla.addAntecedent(intentos_normal);
+		regla.addAntecedent(traumas_normal);
+		regla.addAntecedent(no_util);
+
+		regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+                
+                // 45.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(consumo_leve); 
+		regla.addAntecedent(comportamiento_habitual);  
+		regla.addAntecedent(no_intentos); 
+		regla.addAntecedent(no_traumas);
+		regla.addAntecedent(no_util); 
+                
+                regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+
+                // 46.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(no_consumo); 
+		regla.addAntecedent(comportamiento_alto);  
+		regla.addAntecedent(no_intentos); 
+		regla.addAntecedent(no_traumas);
+		regla.addAntecedent(no_util);
+                
+                regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+                
+                // 47.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(no_consumo); 
+		regla.addAntecedent(comportamiento_habitual);  
+		regla.addAntecedent(intentos_alto); 
+		regla.addAntecedent(no_traumas);
+		regla.addAntecedent(no_util);
+                
+                regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+                
+                // 48.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(no_consumo); 
+		regla.addAntecedent(comportamiento_habitual);  
+		regla.addAntecedent(no_intentos); 
+		regla.addAntecedent(traumas_alto);
+		regla.addAntecedent(no_util);
+                
+                regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+                
+                // 49.
+		regla = new FuzzyRule();
+
+		regla.addAntecedent(no_consumo); 
+		regla.addAntecedent(comportamiento_habitual);  
+		regla.addAntecedent(no_intentos); 
+		regla.addAntecedent(no_traumas);
+		regla.addAntecedent(util_alto);
+                
+                regla.addConclusion(sinRiesgo);
+		this .reglas.add(regla);
+                
+	} // Fin Reglas difusas
+
+    /**Ejecuta las reglas en base a los valores dados y devuelve un string
+     * indicando a que conclusion se llego
+     *
+     * @param consumo 
+     * @param comportamiento 
+     * @param intentos_suicidios 
+     * @param traumas 
+     * @param aprecio
+     *
+     * @return Una cadena que indica si presenta riesgo alto (riesgoAlto), riesgo leve(riesgoLeve)
+     * o no presenta riesgo(sinRiesgo)*/
+
+
+    public String run(float consumo, float comportamiento, float intentos_suicidios, float traumas, float aprecio) throws FuzzyException
+    {
+
+        // Obtenemos un valor al ejecutar las reglas
+        FuzzyValue val = this.getValue(consumo, comportamiento, intentos_suicidios, traumas, aprecio);
+
+        // Ocurrio un error
+        if(val == null)
+        {
+            return null;
+        }
+
+        // Desfusificamos el valor y obtenemos un porcentaje que nos indica si 
+        // presenta riesgo o no 
+        double valor = val.momentDefuzzify();
+
+        if(valor < 33)
+        {
+            return "sinRiesgo";
+        }else if(valor >= 33 && valor < 66){
+            return "riesgoLeve";
+        }else if(valor >= 66){
+            return "riesgoAlto";
+        }else{
+            return "VALOR NO VALIDO";
+        }
+    } // fin public String run
+
+     /**Ejecuta la regla difusa y devuelve un valor difuso a partir de la reglas
+     *
+     * @param consumo 
+     * @param intentos_suicidios 
+     * @param traumas 
+     * @param aprecio
+     *
+     * @return Un valor difuso que puede ser utilizado para encontrar la
+     * respuesta al problema
+     * */
+
+
+    private FuzzyValue getValue(float consumo, float comportamiento, float intentos_suicidios, float traumas, float aprecio) throws FuzzyException
+    {
+        FuzzyValue respuesta = null;
+
+        // Vemos si podemos ejecutar todas las reglas
+        
+        FuzzyValue input1 = new FuzzyValue(this.conjuntos.getConsumo(), new SingletonFuzzySet(consumo));
+        FuzzyValue input2 = new FuzzyValue(this.conjuntos.getComportamiento(), new SingletonFuzzySet(comportamiento));
+        FuzzyValue input3 = new FuzzyValue(this.conjuntos.getintentos_suicidios(), new SingletonFuzzySet(intentos_suicidios));
+        FuzzyValue input4 = new FuzzyValue(this.conjuntos.getTraumas(), new SingletonFuzzySet(traumas));
+        FuzzyValue input5 = new FuzzyValue(this.conjuntos.getAprecio(), new SingletonFuzzySet(aprecio));
+        
+        for(int x=0;x<this.reglas.size();x++)
+        {
+            FuzzyRule rule = this.reglas.get(x);
+                    
+            rule.removeAllInputs();
+
+            // generarInput(Variable, Val, Rango, Max)
+            // En rango va desde donde empieza(0 no cae aca)
+            // En max valor maximo que puede tomar la variable
+            
+            /*FuzzyValue input1 = this.generarInput(this.conjuntos.getConsumo()           , consumo           , 1, 60);
+            FuzzyValue input2 = this.generarInput(this.conjuntos.getComportamiento()    , comportamiento    , 1, 10);
+            FuzzyValue input3 = this.generarInput(this.conjuntos.getintentos_suicidios(), intentos_suicidios, 1, 10);
+            FuzzyValue input4 = this.generarInput(this.conjuntos.getTraumas()           , traumas           , 1, 10);
+            FuzzyValue input5 = this.generarInput(this.conjuntos.getAprecio()           , aprecio           , 1, 10);*/
+            
+            // Agregamos los inputs que corresponden
+            
+            for(int i = 0; i < rule.antecedentsSize(); i++)
+            {
+                FuzzyValue val = rule.antecedentAt(i);
+                // Si a traves de valores de obtiene "string" entonces agregar el input correspondiente
+               
+                // Input 1: Consumo
+                if(     val.getLinguisticExpression().contains("noConsumo")  || 
+                        val.getLinguisticExpression().contains("graveConsumo")       || 
+                        val.getLinguisticExpression().contains("leveConsumo")        || 
+                        val.getLinguisticExpression().contains("sinAdiccion"))
+                {
+                    System.out.println("Input 1");
+                    rule.addInput(input1);
+                }
+
+                // Input 2: Comportamiento
+                else if(val.getLinguisticExpression().contains("habitualComportamiento")    || 
+                        val.getLinguisticExpression().contains("moderadoComportamiento")    || 
+                        val.getLinguisticExpression().contains("altoComportamiento")        || 
+                        val.getLinguisticExpression().contains("graveComportamiento"))
+                {
+                    System.out.println("Input 2");
+                    rule.addInput(input2);
+                }
+
+                // Input 3: Intentos suicidios
+                else if(val.getLinguisticExpression().contains("noSuicidios") || 
+                        val.getLinguisticExpression().contains("pocoSuicidios")        || 
+                        val.getLinguisticExpression().contains("altoSuicidios")        || 
+                        val.getLinguisticExpression().contains("graveSuicidios"))
+                {
+                    System.out.println("Input 3");
+                    rule.addInput(input3);
+                }
+
+                // Input 4: Traumas
+                else if(val.getLinguisticExpression().contains("noTraumas")  || 
+                        val.getLinguisticExpression().contains("pocoTraumas")        || 
+                        val.getLinguisticExpression().contains("altoTraumas")        || 
+                        val.getLinguisticExpression().contains("graveTraumas"))
+                {
+                    System.out.println("Input 4");
+                    rule.addInput(input4);
+                }
+
+                // Input 5: Aprecio
+                else if(val.getLinguisticExpression().contains("noAprecio")     || 
+                        val.getLinguisticExpression().contains("pocoAprecio")        || 
+                        val.getLinguisticExpression().contains("altoAprecio")        || 
+                        val.getLinguisticExpression().contains("demasiadoAprecio"))
+                {
+                    System.out.println("Input 5");
+                    rule.addInput(input5);
+                }
+
+            } //fin for inputs
+            
+            // Si los inputs hacen match, entonces ejecutamos la regla y
+            // obtenemos le primer valor difuso ya que tenemos solo una
+            // conclusion en las reglas.
+            if(rule.testRuleMatching())
+            {                
+                FuzzyValue val = rule.execute().fuzzyValueAt(0);                
+                if(respuesta == null)
+                {
+                    respuesta = val;
+                }else{
+                    // Si ya teniamos una respuesta debemos unir con los valores anteriores
+                    respuesta.fuzzyUnion(val);
+                }
+            } // fin if            
+        } // fin for this.rule        
+        return respuesta;
+    } // Fin getValue
+
+    /**Genera una FuzzyValue en base a input dado fijandose de que el valor
+     * respete los rangos [0, max]
+     *
+     * @param variable El dominio en que se quiere poner el input
+     * @param val El valor del input
+     * @param rango El rango que puede tener este input
+     * @param max El maximo valor que puede tener el input
+     *
+     * @return Una FuzzyValue para el input*/
+
+    
+    private FuzzyValue generarInput(FuzzyVariable variable, int val, int rango, int max)throws FuzzyException
+    {
+        if(val - rango < 0)
+        {
+            return new FuzzyValue(variable, new TriangleFuzzySet(val, val, val+rango));
+        }
+
+        else if(val + rango > max)
+        {
+            return new FuzzyValue(variable, new TriangleFuzzySet(val - rango, val, val));
+        }
+
+        else
+        {
+            return new FuzzyValue(variable, new TriangleFuzzySet(val - rango, val, val + rango));
+        }
+    } //fin generarInput
+
+    
+    /**A partir de los inputs dados retorna un string explicando la conclusion.
+     *
+     * @param consumo 
+     * @param comportamiento 
+     * @param intentos_suicidios 
+     * @param traumas 
+     * @param aprecio 
+     *
+     * @return Un string explicando la conclusion
+     * */
+    public String obtenerExplicacion(float consumo, float comportamiento, float intentos_suicidios, float trauma, float aprecio) throws FuzzyException
+    {
+        String val = this.run(consumo, comportamiento, intentos_suicidios, trauma, aprecio);
+        
+        if(val == null)
+        {
+            return "No hay regla definida";
+        }
+
+        if(val.equals("sinRiesgo"))
+        {
+            return "El paciente no sufre riesgo de suicidarse, no presenta ningún factor de riesgo y no hay planificación suicida. \n Si aparecen indicadores de ánimo depresivo, estos están en la categoría “bajo a moderado” a lo sumo.";
+        }
+        
+        else if(val.equals("riesgoLeve"))
+        {
+            return "El paciente presenta un leve riesgo de suicidarse, cumple un factor de riesgo. \n Aunque no hay planificación suicida, hay presencia de desesperanza, culpa, no percibe apoyos o valores que le ayuden. Hay síntomas leves de ánimo depresivo. ";
+        }
+        
+        else if(val.equals("riesgoAlto")){
+            return "El paciente presenta un alto riesgo de suicidarse, presenta un caso con planificación suicida, sumado a un estado depresivo “grave”";
+        }
+        
+        else{
+            return "Variable linguistica no valida: " + val;
+        }
+        
+
+
+    }
+	
+} // fin class reglasDifusas
